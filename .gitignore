@@ -9,6 +9,7 @@ target/
 .project
 .settings
 .idea
+.gitconfig
 
 # and files generate by IntelliJ
 *.iml

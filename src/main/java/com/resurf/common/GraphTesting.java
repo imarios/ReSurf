@@ -41,6 +41,7 @@ public class GraphTesting {
 
     System.out.println( graph.getNode("A").getDegree() );
   }
+
   public static void main(String[] args) {
     Graph graph = new MultiGraph("Tutorial 1");
 
@@ -55,5 +56,7 @@ public class GraphTesting {
     graph.getEdge("2").setAttribute("00", new ArrayList<>(Arrays.asList(12L, 56L)));
 
     System.out.println(graph.getEdge("2").<ArrayList<Long>>getAttribute("00"));
+
+    graph.display();
   }
 }

@@ -1,4 +1,4 @@
-(ns hello
+(ns com.resurf.hello
  (:gen-class :methods [#^{:static true} [printhello [] void]])
  )
 
