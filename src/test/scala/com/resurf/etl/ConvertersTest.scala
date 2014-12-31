@@ -39,4 +39,13 @@ class ConvertersTest extends TestTemplate {
     event.contentType shouldBe "image/gif"
     println(event)
   }
+
+  val ExampleLogWithNoReferrer =
+    """
+      |1419826260.846 192.168.1.104 54824 GET "http://www.google-analytics.com/r/__utm.gif?" HTTP/1.1 200 548 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36" image/gif
+    """.stripMargin.trim
+  test("Creating a WebRequest without Referrer") {
+    val event = Converters.customSquid2WebEvent(ExampleLogWithNoReferrer)
+    event.referrer shouldBe None
+  }
 }

@@ -2,7 +2,7 @@ package com.resurf.etl
 
 import java.net.URL
 
-import com.resurf.rgraph.WebRequest
+import com.resurf.common.WebRequest
 import com.twitter.util.Time
 
 object Converters {
@@ -11,7 +11,11 @@ object Converters {
   def customSquid2WebEvent(logLine: String): WebRequest =
     logLine match {
       case customSquidPattern(ts, ip, srcPort, method, url, version, code, bytes, referrer, agent, content) =>
+        val optionalReferrer = referrer match {
+          case "-" | "" => None
+          case x => Some(new URL(x))
+        }
         WebRequest(Time.fromMilliseconds((ts.toDouble*1000).toLong),method,new URL(url),
-          new URL(referrer),content,bytes.toInt, Some(logLine) )
+          optionalReferrer,content,bytes.toInt, Some(logLine) )
     }
 }
