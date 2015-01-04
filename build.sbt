@@ -24,6 +24,8 @@ libraryDependencies ++= Seq(
      "org.scalatest" % "scalatest_2.10" % "2.2.1" % "test",
      "com.twitter" %% "util-collection" % "6.12.1",
      "org.json4s" %% "json4s-jackson" % "3.2.11",
+     "org.slf4j" % "slf4j-log4j12" % "1.7.9",
+     "org.slf4j" % "slf4j-api" % "1.7.9",
      "org.graphstream" % "gs-core" %  "1.2",
      "org.graphstream" % "gs-algo" %  "1.1" )
 
