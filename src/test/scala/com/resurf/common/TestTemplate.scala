@@ -8,13 +8,6 @@ import org.scalatest.Matchers
 
 class TestTemplate extends FunSuite with BeforeAndAfter with Matchers {
 
-  protected def writeDataToDisk[T](data: Seq[T], fname: String) = {
-    import java.io._
-    val pw = new PrintWriter(new File(fname))
-    data.foreach(x => pw.write(x + "\n"))
-    pw.close()
-  }
-
   protected def log4jToConsoleAndNewLevel(newLevel: org.apache.log4j.Level) = {
     val rootLogger = org.apache.log4j.Logger.getRootLogger
     rootLogger.removeAllAppenders()
@@ -24,6 +17,6 @@ class TestTemplate extends FunSuite with BeforeAndAfter with Matchers {
 
   before {
     //org.apache.log4j.BasicConfigurator.configure()
-    log4jToConsoleAndNewLevel(org.apache.log4j.Level.ERROR)
+    log4jToConsoleAndNewLevel(org.apache.log4j.Level.OFF)
   }
 }
