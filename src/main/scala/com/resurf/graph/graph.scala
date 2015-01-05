@@ -1,6 +1,9 @@
 package com.resurf.graph
 
+import java.lang
+
 import com.resurf.common.{GraphSummary, NodeProfile, WebRequest, RequestSummary}
+import com.twitter.util.Duration
 import org.graphstream.graph._
 import org.graphstream.graph.implementations.MultiGraph
 import org.graphstream.algorithm.ConnectedComponents
@@ -19,7 +22,7 @@ abstract class RGraphLike {
   def processRequest(newEvent: WebRequest): Unit
 }
 
-case class Link(linkId: String, srcId: String, dstId: String, repo: TimeRepo)
+case class Link(linkId: String, srcId: String, dstId: String, repo: RequestRepository)
 
 
 
@@ -40,13 +43,13 @@ class ReferrerGraph(user: String) extends RGraphLike {
         val node: Node = graph.getNode(nodeId)
         if (node == null) {
           logger.debug("First time seeing node: {}", nodeId)
-          val newRepo = new TimeRepo()
+          val newRepo = new RequestRepository()
           newRepo.add(request)
           this.addNode(nodeId)
           graph.getNode(nodeId).asInstanceOf[Node].setAttribute(SummaryAttribute, newRepo)
         } else {
           logger.debug("Updating existing node {}", nodeId)
-          val attr: TimeRepo = node.asInstanceOf[Node].getAttribute[TimeRepo](SummaryAttribute)
+          val attr: RequestRepository = node.asInstanceOf[Node].getAttribute[RequestRepository](SummaryAttribute)
           if (attr == null) graph.getNode(nodeId).asInstanceOf[Node].setAttribute(SummaryAttribute, attr)
           else attr.add(request)
         }
@@ -65,22 +68,22 @@ class ReferrerGraph(user: String) extends RGraphLike {
     if (edge == null) {
       logger.debug(s"New edge from $srcId to $dstId")
       graph.addEdge(edgeId.toString, srcId, dstId, true)
-      val newRepo = new TimeRepo()
+      val newRepo = new RequestRepository()
       newRepo.add(details)
       val e = graph.getEdge(edgeId.toString).asInstanceOf[Edge]
       assert(e != null, "Edge was just added, it should not be null")
       e.setAttribute(SummaryAttribute, newRepo)
     } else {
-      edge.asInstanceOf[Edge].getAttribute[TimeRepo](SummaryAttribute).add(details)
+      edge.asInstanceOf[Edge].getAttribute[RequestRepository](SummaryAttribute).add(details)
     }
   }
 
   private[this] def getInternalNodes = graph.getEachNode.asScala.map((n: Node) => n)
 
-  private[this] def getTimeRepo(element: Element): Option[TimeRepo] = {
-    val at: TimeRepo = element.getAttribute(SummaryAttribute)
+  private[this] def getTimeRepo(element: Element): Option[RequestRepository] = {
+    val at: RequestRepository = element.getAttribute(SummaryAttribute)
     if (at == null) None
-    else Some(at.asInstanceOf[TimeRepo])
+    else Some(at.asInstanceOf[RequestRepository])
   }
 
 
@@ -95,15 +98,34 @@ class ReferrerGraph(user: String) extends RGraphLike {
     )
   }
 
+  private def getNodeOutgoingRequests(n: Node): Seq[RequestSummary] = {
+    val edges = n.getEachLeavingEdge.asInstanceOf[lang.Iterable[Edge]]
+    edges.asScala.map{
+      (x: Edge) => getTimeRepo(x).get
+    }.flatMap(_.getRepo).toSeq.sorted
+  }
+
   // TODO: Here we return all the details of the node.
   // the timings, the degrees, the content types, etc.
   def getNodeDetailedInfo: Iterable[NodeProfile] = {
     for (n <- getInternalNodes) yield {
       val repo = getTimeRepo(n)
 
-      // - Get incoming request
       // - Get outgoing requests
-      // - For each incoming request find time gap to next outgoing
+      val outRequests = getNodeOutgoingRequests(n)
+      // - For each incoming request find time gap to next outgoing request
+
+      // TODO: Refactor. The entire process needs to be more smoothed.
+      val avgDelay: Duration = repo match {
+        case None => Duration.Zero
+        case Some(data) =>
+          data.getRepo.flatMap {
+            x => RequestRepository.getDurationToNextRequest(x, outRequests)
+          } match {
+            case Nil => Duration.Zero
+            case k : Seq[Duration] => k.head
+          }
+      }
 
       val profile = NodeProfile(
         fanIn = n.getInDegree,
@@ -111,7 +133,8 @@ class ReferrerGraph(user: String) extends RGraphLike {
         totalRequest = repo match {
           case None => 0;
           case Some(t) => t.size
-        }
+        },
+        passThroughDelay = avgDelay
       )
       logger.debug(s"On ${n.getId} $profile")
       profile
@@ -120,7 +143,7 @@ class ReferrerGraph(user: String) extends RGraphLike {
 
   def getLinks: Iterable[Link] = graph.getEachEdge.asScala.map {
     (x: Edge) =>
-      val repo: TimeRepo = x.getAttribute(SummaryAttribute)
+      val repo: RequestRepository = x.getAttribute(SummaryAttribute)
       Link(x.getId, x.getSourceNode.toString, x.getTargetNode.toString, repo)
   }
 

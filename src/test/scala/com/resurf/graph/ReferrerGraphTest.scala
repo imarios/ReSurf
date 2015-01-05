@@ -18,7 +18,7 @@ class ReferrerGraphTest extends TestTemplate {
     graph.getLinks.toList.flatMap(_.repo.getRepo) should have length 3
   }
 
-  test("populating web requests and testing grapj creation") {
+  test("Populating web requests and testing graph creation") {
     val url1 = new URL("http://www.1.com")
     val url2 = new URL("http://www.2.com")
     val url3 = new URL("http://www.3.com")
@@ -34,6 +34,9 @@ class ReferrerGraphTest extends TestTemplate {
 
     graph.getLinks.toSeq should have length 2
     graph.getNodeDetailedInfo.toSeq should have length 3
+
+    println("the gap is now very hacky. needs more work")
+    graph.getNodeDetailedInfo.toSeq.foreach(println)
 
     graph.getGraphSummary should have(
       'nodeCount(3),
