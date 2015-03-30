@@ -2,7 +2,7 @@ package com.resurf.graph
 
 import java.net.URL
 import com.resurf.common.{WebRequest, RequestSummary, TestTemplate}
-import com.twitter.util.Time
+import com.twitter.util.{Duration, Time}
 
 class ReferrerGraphTest extends TestTemplate {
   def now = Time.fromMilliseconds(System.currentTimeMillis())
@@ -43,6 +43,12 @@ class ReferrerGraphTest extends TestTemplate {
       'linkCount(2),
       'connectedComponentCount(1)
     )
+  }
+
+  test("testing average duration") {
+    val durations = (1 to 10).map( Duration.fromSeconds )
+    import com.resurf.common._
+    averageDuration(durations).inMilliseconds shouldEqual 5500
   }
 }
 

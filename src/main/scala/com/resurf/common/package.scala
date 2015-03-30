@@ -1,6 +1,6 @@
 package com.resurf
 
-import com.twitter.util.Time
+import com.twitter.util.{Duration, Time}
 
 /**
  * Contains common utility methods
@@ -15,4 +15,7 @@ package object common {
   }
 
   def getCurrentTime = Time.now
+
+  def averageDuration(data: Seq[Duration]): Duration =
+    Duration.fromNanoseconds(data.map(_.inNanoseconds).sum / data.size)
 }
