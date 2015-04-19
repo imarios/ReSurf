@@ -3,7 +3,7 @@ import Keys._
 
 name := "ReSurf"
 
-organization := "www.resurf.com"
+organization := "www.cs.ucr.edu/~marios"
 
 version := "1.0"
 
