@@ -25,7 +25,6 @@ abstract class RGraphLike {
 case class Link(linkId: String, srcId: String, dstId: String, repo: RequestRepository)
 
 
-
 /** We have one such graph for each src IP */
 class ReferrerGraph(user: String) extends RGraphLike {
 
@@ -100,7 +99,7 @@ class ReferrerGraph(user: String) extends RGraphLike {
 
   private def getNodeOutgoingRequests(n: Node): Seq[RequestSummary] = {
     val edges = n.getEachLeavingEdge.asInstanceOf[lang.Iterable[Edge]]
-    edges.asScala.map{
+    edges.asScala.map {
       (x: Edge) => getTimeRepo(x).get
     }.flatMap(_.getRepo).toSeq.sorted
   }
@@ -110,10 +109,10 @@ class ReferrerGraph(user: String) extends RGraphLike {
   def getNodeDetailedInfo: Iterable[NodeProfile] = {
     for (n <- getInternalNodes) yield {
       // Get incoming requests to this node
-      val incomingRequests = getTimeRepo(n)
+      val incomingRequests: Option[RequestRepository] = getTimeRepo(n)
 
       // - Get outgoing requests (that have the node as referrer)
-      val outgoingRequests = getNodeOutgoingRequests(n)
+      val outgoingRequests: Seq[RequestSummary] = getNodeOutgoingRequests(n)
 
       // - For each incoming request find time gap to next outgoing request
       val avgDelay: Option[Duration] = incomingRequests match {
@@ -123,8 +122,13 @@ class ReferrerGraph(user: String) extends RGraphLike {
             incoming => RequestRepository.getDurationToNextRequest(incoming, outgoingRequests)
           } match {
             case Nil => None
-            case k : Seq[Duration] => Some(averageDuration(k)) // Todo: find the average or median here
+            case k: Seq[Duration] => Some(averageDuration(k)) // Todo: find the average or median here
           }
+      }
+
+      val contentTypes: Set[String] = incomingRequests match {
+        case None => Set.empty[String]
+        case Some(repo) => repo.getRepo.flatMap(_.contentType).toSet
       }
 
       val profile = NodeProfile(
@@ -134,13 +138,13 @@ class ReferrerGraph(user: String) extends RGraphLike {
           case None => 0;
           case Some(t) => t.size
         },
-        passThroughDelay = avgDelay
+        passThroughDelay = avgDelay,
+        contentTypes = contentTypes.size
       )
       logger.debug(s"On ${n.getId} $profile")
       profile
     }
   }
-
 
 
   def getLinks: Iterable[Link] = internalGraph.getEachEdge.asScala.map {
@@ -164,6 +168,6 @@ class ReferrerGraph(user: String) extends RGraphLike {
   }
 }
 
-object ReferrerGraph{
+object ReferrerGraph {
 
 }

@@ -24,6 +24,10 @@ case class WebRequest(ts: Time, method: String, url: URL, referrer: Option[URL],
 }
 
 
-case class NodeProfile(fanIn: Int, fanOut: Int, totalRequest: Int, passThroughDelay: Option[Duration])
+case class NodeProfile(fanIn: Int,
+                       fanOut: Int,
+                       totalRequest: Int,
+                       passThroughDelay: Option[Duration],
+                        contentTypes: Int)
 
 case class GraphSummary(nodeCount: Int, linkCount: Int, connectedComponentCount: Int)
